@@ -1,0 +1,284 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Warm luxury real estate palette */
+    --background: 40 20% 98%;
+    --foreground: 220 20% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 10%;
+
+    /* Deep forest green - trust & growth */
+    --primary: 160 45% 25%;
+    --primary-foreground: 40 20% 98%;
+
+    /* Warm cream */
+    --secondary: 40 30% 94%;
+    --secondary-foreground: 220 20% 10%;
+
+    --muted: 40 20% 92%;
+    --muted-foreground: 220 10% 45%;
+
+    /* Golden accent for luxury */
+    --accent: 38 80% 55%;
+    --accent-foreground: 220 20% 10%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 40 20% 88%;
+    --input: 40 20% 88%;
+    --ring: 160 45% 25%;
+
+    --radius: 0.75rem;
+
+    /* Custom tokens */
+    --forest: 160 45% 25%;
+    --forest-light: 160 35% 35%;
+    --forest-dark: 160 50% 18%;
+    --cream: 40 30% 94%;
+    --cream-dark: 40 20% 88%;
+    --gold: 38 80% 55%;
+    --gold-light: 38 85% 65%;
+    --gold-dark: 38 75% 45%;
+    --charcoal: 220 20% 15%;
+    --sage: 145 20% 75%;
+
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(160 50% 18%), hsl(160 45% 25%) 50%, hsl(160 35% 35%));
+    --gradient-gold: linear-gradient(135deg, hsl(38 75% 45%), hsl(38 80% 55%), hsl(38 85% 65%));
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(40 30% 98%));
+
+    /* Shadows */
+    --shadow-soft: 0 4px 20px -4px hsl(220 20% 10% / 0.08);
+    --shadow-elevated: 0 10px 40px -10px hsl(220 20% 10% / 0.15);
+    --shadow-glow: 0 0 30px hsl(38 80% 55% / 0.3);
+
+    --sidebar-background: 40 30% 96%;
+    --sidebar-foreground: 220 20% 10%;
+    --sidebar-primary: 160 45% 25%;
+    --sidebar-primary-foreground: 40 20% 98%;
+    --sidebar-accent: 40 30% 92%;
+    --sidebar-accent-foreground: 220 20% 10%;
+    --sidebar-border: 40 20% 88%;
+    --sidebar-ring: 160 45% 25%;
+  }
+
+  .dark {
+    --background: 220 25% 8%;
+    --foreground: 40 20% 95%;
+
+    --card: 220 25% 12%;
+    --card-foreground: 40 20% 95%;
+
+    --popover: 220 25% 12%;
+    --popover-foreground: 40 20% 95%;
+
+    --primary: 160 40% 45%;
+    --primary-foreground: 220 25% 8%;
+
+    --secondary: 220 20% 18%;
+    --secondary-foreground: 40 20% 95%;
+
+    --muted: 220 20% 18%;
+    --muted-foreground: 40 15% 60%;
+
+    --accent: 38 75% 50%;
+    --accent-foreground: 220 25% 8%;
+
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 40 20% 95%;
+
+    --border: 220 20% 20%;
+    --input: 220 20% 20%;
+    --ring: 160 40% 45%;
+
+    --sidebar-background: 220 25% 10%;
+    --sidebar-foreground: 40 20% 95%;
+    --sidebar-primary: 160 40% 45%;
+    --sidebar-primary-foreground: 220 25% 8%;
+    --sidebar-accent: 220 20% 18%;
+    --sidebar-accent-foreground: 40 20% 95%;
+    --sidebar-border: 220 20% 20%;
+    --sidebar-ring: 160 40% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  /* Hide scrollbar utility */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Property card hover effect */
+  .property-card {
+    @apply relative overflow-hidden rounded-2xl bg-card border border-border/50 transition-all duration-500;
+  }
+  
+  .property-card:hover {
+    @apply shadow-elevated border-border;
+    transform: translateY(-4px);
+  }
+
+  .property-card:hover .property-image {
+    transform: scale(1.05);
+  }
+
+  .property-image {
+    @apply transition-transform duration-700 ease-out;
+  }
+
+  /* Glass effect */
+  .glass {
+    @apply bg-card/80 backdrop-blur-md border border-border/30;
+  }
+
+  /* Badge styles */
+  .badge-status {
+    @apply px-3 py-1 rounded-full text-xs font-semibold;
+  }
+
+  .badge-sale {
+    @apply bg-primary text-primary-foreground;
+  }
+
+  .badge-rent {
+    @apply bg-accent text-accent-foreground;
+  }
+
+  .badge-type {
+    @apply bg-secondary text-secondary-foreground;
+  }
+
+  /* AI Indicator pulse */
+  .ai-pulse {
+    @apply relative;
+  }
+
+  .ai-pulse::before {
+    content: '';
+    @apply absolute -inset-1 rounded-full bg-accent/30;
+    animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse-ring {
+    0%, 100% {
+      opacity: 0.4;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.2;
+      transform: scale(1.1);
+    }
+  }
+
+  /* Shimmer loading effect */
+  .shimmer {
+    @apply relative overflow-hidden;
+  }
+
+  .shimmer::after {
+    content: '';
+    @apply absolute inset-0;
+    background: linear-gradient(90deg, transparent, hsl(var(--accent) / 0.1), transparent);
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  /* Floating chat widget */
+  .chat-widget {
+    @apply fixed bottom-6 right-6 z-50;
+  }
+
+  /* Custom scrollbar for modals */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-muted rounded-full;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full hover:bg-muted-foreground/30;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-gold);
+  }
+
+  .bg-gradient-hero {
+    background-image: var(--gradient-hero);
+  }
+
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .animate-fade-up {
+    animation: fade-up 0.6s ease-out forwards;
+  }
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animation-delay-100 { animation-delay: 100ms; }
+  .animation-delay-200 { animation-delay: 200ms; }
+  .animation-delay-300 { animation-delay: 300ms; }
+  .animation-delay-400 { animation-delay: 400ms; }
+  .animation-delay-500 { animation-delay: 500ms; }
+}
