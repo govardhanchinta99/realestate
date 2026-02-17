@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, Search, Menu, X, Sparkles, Home, Settings } from "lucide-react";
+import { Heart, Search, Menu, X, Sparkles, Home, Settings, UserPlus, LogIn } from "lucide-react";
 import { useProperty } from "@/context/PropertyContext";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -77,7 +77,23 @@ const Navbar: React.FC = () => {
               <Settings className="w-4 h-4" />
               <span>Admin</span>
             </Link>
-            
+
+            <Link
+              to="/signup"
+              className="hidden sm:flex items-center gap-2 text-muted-foreground hover:text-foreground font-medium text-sm px-3 py-2 rounded-lg hover:bg-secondary/50 transition-all"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Sign Up</span>
+            </Link>
+
+            <Link
+              to="/login"
+              className="hidden sm:flex items-center gap-2 text-muted-foreground hover:text-foreground font-medium text-sm px-3 py-2 rounded-lg hover:bg-secondary/50 transition-all"
+            >
+              <LogIn className="w-4 h-4" />
+              <span>Login</span>
+            </Link>
+
             <Link
               to="/saved"
               className="relative p-2.5 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/50"
@@ -146,6 +162,22 @@ const Navbar: React.FC = () => {
                   >
                     <Settings className="w-5 h-5 text-primary" />
                     Admin Dashboard
+                  </Link>
+                  <Link
+                    to="/signup"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary/50 text-foreground font-medium transition-colors"
+                  >
+                    <UserPlus className="w-5 h-5 text-primary" />
+                    Sign Up
+                  </Link>
+                  <Link
+                    to="/login"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary/50 text-foreground font-medium transition-colors"
+                  >
+                    <LogIn className="w-5 h-5 text-primary" />
+                    Login
                   </Link>
                 </div>
               </div>
