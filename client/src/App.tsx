@@ -11,6 +11,8 @@ import PropertyDetails from "@/pages/PropertyDetails";
 import SavedProperties from "@/pages/SavedProperties";
 import SemanticSearch from "@/pages/SemanticSearch";
 import AdminDashboard from "@/pages/AdminDashboard";
+import Signup from "@/pages/Signup";
+import Login from "@/pages/Login";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +32,8 @@ const App = () => (
               <Route path="/saved" element={<SavedProperties />} />
               <Route path="/semantic-search" element={<SemanticSearch />} />
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/login" element={<Login />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <RealEstateChatbot />

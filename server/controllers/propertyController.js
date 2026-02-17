@@ -4,6 +4,7 @@ const {
     generatePropertyDescription,
     generatePropertyDetailsFromImage,
     generateEmbedding,
+    generateInvestmentPotential,
 } = require("../services/aiService");
 const { Pinecone } = require("@pinecone-database/pinecone");
 
@@ -246,6 +247,44 @@ const generateDetailsFromImage = async (req, res) => {
     }
 };
 
+
+const getInvestmentAnalysis = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!ObjectId.isValid(id)) {
+            return res.status(400).json({ message: "Invalid Property ID" });
+        }
+
+        const property = await getCollection().findOne({ _id: new ObjectId(id) });
+        if (!property) {
+            return res.status(404).json({ message: "Property not found" });
+        }
+
+        const location = String(property.location || '').toLowerCase();
+        const yieldByArea = [
+            { key: 'downtown', yield: 5.8, ppsf: 420 },
+            { key: 'metro city', yield: 5.2, ppsf: 360 },
+            { key: 'coastal', yield: 4.6, ppsf: 520 },
+            { key: 'suburb', yield: 4.9, ppsf: 280 },
+            { key: 'countryside', yield: 3.8, ppsf: 180 },
+        ];
+
+        const benchmark = yieldByArea.find((item) => location.includes(item.key)) || { yield: 4.8, ppsf: 300 };
+
+        const analysis = await generateInvestmentPotential({
+            location: property.location,
+            price: Number(property.price) || 0,
+            area: Number(property.area) || 0,
+            avgRentalYield: benchmark.yield,
+            marketPricePerSqft: benchmark.ppsf,
+        });
+
+        res.json({ propertyId: property._id, ...analysis });
+    } catch (error) {
+        res.status(500).json({ message: "Investment analysis failed", error: error.message });
+    }
+};
+
 // @desc    Semantic search using vector embeddings
 // @route   GET /api/properties/search/semantic
 const semanticSearch = async (req, res) => {
@@ -307,4 +346,5 @@ module.exports = {
     generateDescription,
     generateDetailsFromImage,
     semanticSearch,
+    getInvestmentAnalysis,
 };
