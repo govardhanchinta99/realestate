@@ -20,6 +20,14 @@ interface Property {
   image: string;
 }
 
+interface LeaseSummary {
+  securityDeposit: string;
+  noticePeriod: string;
+  petPolicy: string;
+  hiddenFees: string[];
+  summary: string;
+}
+
 interface FormData {
   title: string;
   description: string;
@@ -52,6 +60,9 @@ const AdminDashboard: React.FC = () => {
     status: 'For Sale',
     image: ''
   });
+  const [leaseText, setLeaseText] = useState('');
+  const [leaseSummary, setLeaseSummary] = useState<LeaseSummary | null>(null);
+  const [isSummarizingLease, setIsSummarizingLease] = useState(false);
 
   useEffect(() => {
     fetchProperties();
@@ -183,6 +194,30 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const summarizeLease = async () => {
+    if (!leaseText.trim()) {
+      alert('Please paste lease text first');
+      return;
+    }
+
+    setIsSummarizingLease(true);
+    try {
+      const response = await axios.post('http://localhost:3001/api/ai/summarize-lease', { leaseText });
+      setLeaseSummary(response.data);
+    } catch (error) {
+      console.error('Error summarizing lease:', error);
+      setLeaseSummary({
+        securityDeposit: 'Not specified',
+        noticePeriod: 'Not specified',
+        petPolicy: 'Not specified',
+        hiddenFees: ['Not specified'],
+        summary: 'Unable to summarize lease right now.',
+      });
+    } finally {
+      setIsSummarizingLease(false);
+    }
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -247,6 +282,46 @@ const AdminDashboard: React.FC = () => {
             <Plus size={20} />
             Add Property
           </button>
+        </motion.div>
+
+
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="mb-8 bg-card shadow-soft rounded-2xl border border-border p-6"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-4 h-4 text-accent" />
+            <h2 className="font-semibold text-foreground">Lease Term Summarizer</h2>
+          </div>
+          <textarea
+            value={leaseText}
+            onChange={(e) => setLeaseText(e.target.value)}
+            rows={4}
+            placeholder="Paste rental agreement text here to extract Security Deposit, Notice Period, Pet Policy, and Hidden Fees"
+            className="w-full px-4 py-3 bg-secondary/50 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 text-foreground placeholder:text-muted-foreground"
+          />
+          <div className="mt-3 flex gap-3 items-center">
+            <button
+              onClick={summarizeLease}
+              disabled={isSummarizingLease}
+              className="bg-accent text-accent-foreground px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+            >
+              {isSummarizingLease ? 'Summarizing...' : 'Generate Quick Look'}
+            </button>
+          </div>
+
+          {leaseSummary && (
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+              <div className="p-3 rounded-xl bg-secondary/30 border border-border"><strong>Security Deposit:</strong> {leaseSummary.securityDeposit}</div>
+              <div className="p-3 rounded-xl bg-secondary/30 border border-border"><strong>Notice Period:</strong> {leaseSummary.noticePeriod}</div>
+              <div className="p-3 rounded-xl bg-secondary/30 border border-border"><strong>Pet Policy:</strong> {leaseSummary.petPolicy}</div>
+              <div className="p-3 rounded-xl bg-secondary/30 border border-border"><strong>Hidden Fees:</strong> {leaseSummary.hiddenFees?.join(', ')}</div>
+              <div className="p-3 rounded-xl bg-secondary/30 border border-border md:col-span-2"><strong>Summary:</strong> {leaseSummary.summary}</div>
+            </div>
+          )}
         </motion.div>
 
         {/* Properties Table */}

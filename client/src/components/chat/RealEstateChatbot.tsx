@@ -8,6 +8,12 @@ interface Message {
   content: string;
 }
 
+interface PropertySearchResult {
+  title: string;
+  location: string;
+  price: number;
+}
+
 const RealEstateChatbot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -59,7 +65,7 @@ const RealEstateChatbot: React.FC = () => {
           botAnswer = "I couldn't find matching properties for that query. Try describing what you're looking for differently, or browse our listings!";
         } else {
           botAnswer = `I found ${results.length} properties matching your criteria:\n\n` +
-            results.slice(0, 3).map((p: any, i: number) => 
+            results.slice(0, 3).map((p: PropertySearchResult, i: number) => 
               `${i + 1}. **${p.title}** in ${p.location} — $${p.price.toLocaleString()}`
             ).join('\n');
         }

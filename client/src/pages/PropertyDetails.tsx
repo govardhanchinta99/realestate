@@ -23,6 +23,15 @@ interface Property {
   amenities?: string[];
 }
 
+interface InvestmentAnalysis {
+  rating: 'Strong' | 'Moderate' | 'Cautious' | string;
+  analysis: string;
+  avgRentalYield: number;
+  marketPricePerSqft: number;
+  pricePerSqft: number;
+  marketDeltaPercent: number;
+}
+
 const PropertyDetails: React.FC = () => {
   const { id } = useParams();
   const { addToSaved, isSaved } = useProperty();
@@ -31,12 +40,16 @@ const PropertyDetails: React.FC = () => {
   const [chatQuestion, setChatQuestion] = useState('');
   const [chatAnswer, setChatAnswer] = useState('');
   const [isAsking, setIsAsking] = useState(false);
+  const [investmentAnalysis, setInvestmentAnalysis] = useState<InvestmentAnalysis | null>(null);
 
   useEffect(() => {
     const fetchProperty = async () => {
       try {
         const response = await axios.get(`http://localhost:3001/api/properties/${id}`);
         setProperty(response.data);
+
+        const investmentResponse = await axios.get(`http://localhost:3001/api/properties/${id}/investment-analysis`);
+        setInvestmentAnalysis(investmentResponse.data);
       } catch (error) {
         console.error('Error fetching property:', error);
         // Use mock data for demo
@@ -68,6 +81,7 @@ const PropertyDetails: React.FC = () => {
     try {
       const response = await axios.post('http://localhost:3001/api/ai/ask-property', {
         question: chatQuestion,
+        propertyId: property._id,
         propertyContext: `${property.title}. ${property.description}. Amenities: ${property.amenities?.join(', ')}`
       });
       setChatAnswer(response.data.answer);
@@ -249,9 +263,18 @@ const PropertyDetails: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground">
-                <span className="text-primary font-semibold">Strong Investment:</span> This property is positioned competitively for the {property.location} market with an estimated 5-7% annual appreciation potential based on local trends.
-              </p>
+              {investmentAnalysis ? (
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    <span className="text-primary font-semibold">{investmentAnalysis.rating} Investment:</span> {investmentAnalysis.analysis}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Rental Yield: {investmentAnalysis.avgRentalYield}% · Price/sqft: ${investmentAnalysis.pricePerSqft.toFixed(0)} · Market Delta: {investmentAnalysis.marketDeltaPercent}%
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Investment analysis will appear when available.</p>
+              )}
             </div>
 
             {/* Action Buttons */}
