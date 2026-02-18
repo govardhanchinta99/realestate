@@ -10,9 +10,11 @@ const {
     generateDescription,
     generateDetailsFromImage,
     semanticSearch,
+    getInvestmentAnalysis,
 } = require("../controllers/propertyController");
 
 router.get("/search/semantic", semanticSearch);
+router.get("/:id/investment-analysis", getInvestmentAnalysis);
 
 router.route("/").get(getProperties).post(createProperty);
 
