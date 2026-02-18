@@ -1,7 +1,26 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { UserPlus, Mail, Lock, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (options: {
+            client_id: string;
+            callback: (response: { credential: string }) => void;
+          }) => void;
+          renderButton: (
+            parent: HTMLElement,
+            options: { theme: string; size: string; text: string; shape: string }
+          ) => void;
+        };
+      };
+    };
+  }
+}
 
 const Signup: React.FC = () => {
   const [name, setName] = useState('');
@@ -10,6 +29,56 @@ const Signup: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
+
+  const handleGoogleCredential = async (credential: string) => {
+    setLoading(true);
+    setMessage('');
+    setError('');
+    try {
+      const response = await axios.post('http://localhost:3001/api/auth/google', { credential });
+      setMessage(response.data.message || 'Google signup successful');
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) setError(err.response?.data?.message || 'Google signup failed');
+      else setError('Google signup failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!googleClientId) return;
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      const buttonEl = document.getElementById('google-signup-btn');
+      if (!window.google || !buttonEl) return;
+
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: (response) => {
+          if (response.credential) handleGoogleCredential(response.credential);
+        },
+      });
+
+      buttonEl.innerHTML = '';
+      window.google.accounts.id.renderButton(buttonEl, {
+        theme: 'outline',
+        size: 'large',
+        text: 'signup_with',
+        shape: 'pill',
+      });
+    };
+
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, [googleClientId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +108,18 @@ const Signup: React.FC = () => {
             <UserPlus className="w-6 h-6 text-primary" />
           </div>
           <h1 className="font-display text-2xl font-bold text-foreground">Create account</h1>
-          <p className="text-sm text-muted-foreground mt-1">Sign up with your email</p>
+          <p className="text-sm text-muted-foreground mt-1">Sign up with your email or Google</p>
+        </div>
+
+        {googleClientId ? (
+          <div id="google-signup-btn" className="flex justify-center mb-4" />
+        ) : (
+          <p className="text-xs text-muted-foreground text-center mb-4">Set VITE_GOOGLE_CLIENT_ID to enable Google signup.</p>
+        )}
+
+        <div className="relative mb-4">
+          <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
+          <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">or with email</span></div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
