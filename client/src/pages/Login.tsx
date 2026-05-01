@@ -1,98 +1,37 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { LogIn, Mail, Lock } from 'lucide-react';
-import { Link } from 'react-router-dom';
-
-declare global {
-  interface Window {
-    google?: {
-      accounts: {
-        id: {
-          initialize: (options: {
-            client_id: string;
-            callback: (response: { credential: string }) => void;
-          }) => void;
-          renderButton: (
-            parent: HTMLElement,
-            options: { theme: string; size: string; text: string; shape: string }
-          ) => void;
-        };
-      };
-    };
-  }
-}
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
-
-  const handleGoogleLogin = async (credential: string) => {
-    setLoading(true);
-    setMessage('');
-    setError('');
-    try {
-      const response = await axios.post('http://localhost:3001/api/auth/google', { credential });
-      setMessage(response.data.message || 'Google login successful');
-    } catch (err: unknown) {
-      if (axios.isAxiosError(err)) setError(err.response?.data?.message || 'Google login failed');
-      else setError('Google login failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!googleClientId) return;
-
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      const buttonEl = document.getElementById('google-login-btn');
-      if (!window.google || !buttonEl) return;
-
-      window.google.accounts.id.initialize({
-        client_id: googleClientId,
-        callback: (response) => {
-          if (response.credential) handleGoogleLogin(response.credential);
-        },
-      });
-
-      buttonEl.innerHTML = '';
-      window.google.accounts.id.renderButton(buttonEl, {
-        theme: 'outline',
-        size: 'large',
-        text: 'signin_with',
-        shape: 'pill',
-      });
-    };
-
-    document.body.appendChild(script);
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, [googleClientId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setMessage('');
-    setError('');
 
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/login', { email, password });
-      setMessage(response.data.message || 'Login successful');
-      setEmail('');
-      setPassword('');
+      await login(email, password);
+      navigate('/');
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) setError(err.response?.data?.message || 'Login failed');
-      else setError('Login failed');
+      if (axios.isAxiosError(err)) {
+        const msg = err.response?.data?.message || 'Login failed';
+        if (err.response?.status === 401) {
+          setError('Invalid email or password');
+        } else {
+          setError(msg);
+        }
+      } else {
+        setError('Login failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -106,18 +45,6 @@ const Login: React.FC = () => {
             <LogIn className="w-6 h-6 text-primary" />
           </div>
           <h1 className="font-display text-2xl font-bold text-foreground">Welcome back</h1>
-          <p className="text-sm text-muted-foreground mt-1">Log in with email or Google</p>
-        </div>
-
-        {googleClientId ? (
-          <div id="google-login-btn" className="flex justify-center mb-4" />
-        ) : (
-          <p className="text-xs text-muted-foreground text-center mb-4">Set VITE_GOOGLE_CLIENT_ID to enable Google login.</p>
-        )}
-
-        <div className="relative mb-4">
-          <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
-          <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">or with email</span></div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

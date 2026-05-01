@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, Search, Menu, X, Sparkles, Home, Settings, UserPlus, LogIn } from "lucide-react";
+import { Heart, Search, Menu, X, Sparkles, Home, Settings, UserPlus, LogIn, LogOut } from "lucide-react";
 import { useProperty } from "@/context/PropertyContext";
+import { useAuth } from "@/context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 
 const Navbar: React.FC = () => {
   const { savedProperties } = useProperty();
+  const { isAuthenticated, isAdmin, user, logout } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -70,29 +72,48 @@ const Navbar: React.FC = () => {
 
           {/* Right Icons */}
           <div className="flex items-center gap-2 sm:gap-4">
-            <Link
-              to="/admin"
-              className="hidden sm:flex items-center gap-2 text-muted-foreground hover:text-foreground font-medium text-sm px-3 py-2 rounded-lg hover:bg-secondary/50 transition-all"
-            >
-              <Settings className="w-4 h-4" />
-              <span>Admin</span>
-            </Link>
+            {isAuthenticated && isAdmin && (
+              <Link
+                to="/admin"
+                className="hidden sm:flex items-center gap-2 text-muted-foreground hover:text-foreground font-medium text-sm px-3 py-2 rounded-lg hover:bg-secondary/50 transition-all"
+              >
+                <Settings className="w-4 h-4" />
+                <span>Admin</span>
+              </Link>
+            )}
 
-            <Link
-              to="/signup"
-              className="hidden sm:flex items-center gap-2 text-muted-foreground hover:text-foreground font-medium text-sm px-3 py-2 rounded-lg hover:bg-secondary/50 transition-all"
-            >
-              <UserPlus className="w-4 h-4" />
-              <span>Sign Up</span>
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <span className="hidden sm:block text-sm text-muted-foreground">
+                  {user?.name}
+                </span>
+                <button
+                  onClick={logout}
+                  className="hidden sm:flex items-center gap-2 text-muted-foreground hover:text-foreground font-medium text-sm px-3 py-2 rounded-lg hover:bg-secondary/50 transition-all"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Logout</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/signup"
+                  className="hidden sm:flex items-center gap-2 text-muted-foreground hover:text-foreground font-medium text-sm px-3 py-2 rounded-lg hover:bg-secondary/50 transition-all"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>Sign Up</span>
+                </Link>
 
-            <Link
-              to="/login"
-              className="hidden sm:flex items-center gap-2 text-muted-foreground hover:text-foreground font-medium text-sm px-3 py-2 rounded-lg hover:bg-secondary/50 transition-all"
-            >
-              <LogIn className="w-4 h-4" />
-              <span>Login</span>
-            </Link>
+                <Link
+                  to="/login"
+                  className="hidden sm:flex items-center gap-2 text-muted-foreground hover:text-foreground font-medium text-sm px-3 py-2 rounded-lg hover:bg-secondary/50 transition-all"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>Login</span>
+                </Link>
+              </>
+            )}
 
             <Link
               to="/saved"
@@ -155,30 +176,49 @@ const Navbar: React.FC = () => {
                     <Home className="w-5 h-5 text-primary" />
                     Home
                   </Link>
-                  <Link
-                    to="/admin"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary/50 text-foreground font-medium transition-colors"
-                  >
-                    <Settings className="w-5 h-5 text-primary" />
-                    Admin Dashboard
-                  </Link>
-                  <Link
-                    to="/signup"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary/50 text-foreground font-medium transition-colors"
-                  >
-                    <UserPlus className="w-5 h-5 text-primary" />
-                    Sign Up
-                  </Link>
-                  <Link
-                    to="/login"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary/50 text-foreground font-medium transition-colors"
-                  >
-                    <LogIn className="w-5 h-5 text-primary" />
-                    Login
-                  </Link>
+                  {isAuthenticated && isAdmin && (
+                    <Link
+                      to="/admin"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary/50 text-foreground font-medium transition-colors"
+                    >
+                      <Settings className="w-5 h-5 text-primary" />
+                      Admin Dashboard
+                    </Link>
+                  )}
+                  {isAuthenticated ? (
+                    <>
+                      <span className="px-4 text-sm text-muted-foreground">
+                        {user?.name}
+                      </span>
+                      <button
+                        onClick={() => { logout(); setIsMenuOpen(false); }}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary/50 text-foreground font-medium transition-colors"
+                      >
+                        <LogOut className="w-5 h-5 text-primary" />
+                        Logout
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        to="/signup"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary/50 text-foreground font-medium transition-colors"
+                      >
+                        <UserPlus className="w-5 h-5 text-primary" />
+                        Sign Up
+                      </Link>
+                      <Link
+                        to="/login"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary/50 text-foreground font-medium transition-colors"
+                      >
+                        <LogIn className="w-5 h-5 text-primary" />
+                        Login
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
             </motion.div>

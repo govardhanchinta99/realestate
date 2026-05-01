@@ -108,19 +108,8 @@ const Signup: React.FC = () => {
             <UserPlus className="w-6 h-6 text-primary" />
           </div>
           <h1 className="font-display text-2xl font-bold text-foreground">Create account</h1>
-          <p className="text-sm text-muted-foreground mt-1">Sign up with your email or Google</p>
         </div>
 
-        {googleClientId ? (
-          <div id="google-signup-btn" className="flex justify-center mb-4" />
-        ) : (
-          <p className="text-xs text-muted-foreground text-center mb-4">Set VITE_GOOGLE_CLIENT_ID to enable Google signup.</p>
-        )}
-
-        <div className="relative mb-4">
-          <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
-          <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">or with email</span></div>
-        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
