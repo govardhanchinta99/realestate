@@ -1,11 +1,14 @@
-const { MongoClient } = require('mongodb');
 require('dotenv').config();
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '8.8.4.4']);
+const { MongoClient } = require('mongodb');
+
 
 const uri = process.env.MONGO_URI || 'mongodb://localhost:27017';
 const dbName = 'realestate';
 
 let db;
-
+console.log("Connecting to:", process.env.MONGODB_URI?.replace(/:([^@]+)@/, ':****@'));
 const connectDB = async () => {
   if (db) return db;
   try {
