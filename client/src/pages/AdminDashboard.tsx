@@ -70,7 +70,7 @@ const AdminDashboard: React.FC = () => {
 
   const fetchProperties = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/properties');
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/properties`);
       setProperties(response.data);
     } catch (error) {
       console.error('Error fetching properties:', error);
@@ -109,7 +109,7 @@ const AdminDashboard: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this property?')) {
       try {
-        await axios.delete(`http://localhost:3001/api/properties/${id}`);
+        await axios.delete(`${import.meta.env.VITE_API_URL}/api/properties/${id}`);
         fetchProperties();
       } catch (error) {
         console.error('Error deleting property:', error);
@@ -122,9 +122,9 @@ const AdminDashboard: React.FC = () => {
     e.preventDefault();
     try {
       if (editingProperty) {
-        await axios.put(`http://localhost:3001/api/properties/${editingProperty._id}`, formData);
+        await axios.put(`${import.meta.env.VITE_API_URL}/api/properties/${editingProperty._id}`, formData);
       } else {
-        await axios.post('http://localhost:3001/api/properties', formData);
+        await axios.post(`${import.meta.env.VITE_API_URL}/api/properties`, formData);
       }
       setIsModalOpen(false);
       setEditingProperty(null);
@@ -151,7 +151,7 @@ const AdminDashboard: React.FC = () => {
 
     setIsGeneratingDescription(true);
     try {
-      const response = await axios.post('http://localhost:3001/api/properties/generate-description', {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/properties/generate-description`, {
         title: formData.title,
         propertyType: formData.propertyType,
         location: formData.location,
@@ -181,7 +181,7 @@ const AdminDashboard: React.FC = () => {
     data.append('image', imageFile);
 
     try {
-      const response = await axios.post('http://localhost:3001/api/properties/generate-details-from-image', data, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/properties/generate-details-from-image`, data, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       const { title, description, propertyType } = response.data.data;
@@ -202,7 +202,7 @@ const AdminDashboard: React.FC = () => {
 
     setIsSummarizingLease(true);
     try {
-      const response = await axios.post('http://localhost:3001/api/ai/summarize-lease', { leaseText });
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/ai/summarize-lease`, { leaseText });
       setLeaseSummary(response.data);
     } catch (error) {
       console.error('Error summarizing lease:', error);

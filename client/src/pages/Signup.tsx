@@ -37,7 +37,7 @@ const Signup: React.FC = () => {
     setMessage('');
     setError('');
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/google', { credential });
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/google`, { credential });
       setMessage(response.data.message || 'Google signup successful');
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) setError(err.response?.data?.message || 'Google signup failed');
@@ -87,7 +87,7 @@ const Signup: React.FC = () => {
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/signup', { name, email, password });
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/signup`, { name, email, password });
       setMessage(response.data.message || 'Signup successful');
       setName('');
       setEmail('');

@@ -45,10 +45,10 @@ const PropertyDetails: React.FC = () => {
   useEffect(() => {
     const fetchProperty = async () => {
       try {
-        const response = await axios.get(`http://localhost:3001/api/properties/${id}`);
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/properties/${id}`);
         setProperty(response.data);
 
-        const investmentResponse = await axios.get(`http://localhost:3001/api/properties/${id}/investment-analysis`);
+        const investmentResponse = await axios.get(`${import.meta.env.VITE_API_URL}/api/properties/${id}/investment-analysis`);
         setInvestmentAnalysis(investmentResponse.data);
       } catch (error) {
         console.error('Error fetching property:', error);
@@ -79,7 +79,7 @@ const PropertyDetails: React.FC = () => {
     
     setIsAsking(true);
     try {
-      const response = await axios.post('http://localhost:3001/api/ai/ask-property', {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/ai/ask-property`, {
         question: chatQuestion,
         propertyId: property._id,
         propertyContext: `${property.title}. ${property.description}. Amenities: ${property.amenities?.join(', ')}`

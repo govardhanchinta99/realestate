@@ -18,7 +18,7 @@ const SemanticSearch: React.FC = () => {
       setLoading(true);
       try {
         const response = await axios.get(
-          `http://localhost:3001/api/properties/search/semantic?q=${encodeURIComponent(query)}`
+          `${import.meta.env.VITE_API_URL}/api/properties/search/semantic?q=${encodeURIComponent(query)}`
         );
         setResults(response.data);
       } catch (error) {
