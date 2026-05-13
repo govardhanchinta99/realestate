@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors({
-  origin: "https://realestate-seven-iota.vercel.app/",
+  origin: process.env.CLIENT_URL,
   credentials: true
 }));
 app.use(express.json());
