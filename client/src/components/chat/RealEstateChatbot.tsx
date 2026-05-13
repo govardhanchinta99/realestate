@@ -57,7 +57,7 @@ const RealEstateChatbot: React.FC = () => {
 
       if (isPropertyQuery(userMessage)) {
         const response = await axios.get(
-          `http://localhost:3001/api/properties/search/semantic?q=${encodeURIComponent(userMessage)}`
+          `${import.meta.env.VITE_API_URL}/api/properties/search/semantic?q=${encodeURIComponent(userMessage)}`
         );
         const results = response.data;
 
@@ -70,7 +70,7 @@ const RealEstateChatbot: React.FC = () => {
             ).join('\n');
         }
       } else {
-        const response = await axios.post("http://localhost:3001/api/ai/ask-policy", {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/ai/ask-policy`, {
           question: userMessage,
           history: messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', content: m.content })),
         });

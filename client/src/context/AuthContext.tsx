@@ -37,7 +37,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await axios.post(`https://realestate-backend-6bxy.onrender.com/api/auth/login`, { email, password });
+    const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, { email, password });
     const userData = response.data.user;
 
     // Check if user email matches admin email
@@ -49,7 +49,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const signup = async (name: string, email: string, password: string) => {
-    const response = await axios.post(`https://realestate-backend-6bxy.onrender.com/api/auth/signup`, { name, email, password });
+    const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/signup`, { name, email, password });
     const userData = response.data.user;
 
     // Check if user email matches admin email
