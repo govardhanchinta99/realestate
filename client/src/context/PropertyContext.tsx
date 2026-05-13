@@ -52,7 +52,7 @@ export const PropertyProvider: React.FC<PropertyProviderProps> = ({ children }) 
   const fetchProperties = async (search = '') => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:3001/api/properties?search=${search}`);
+      const response = await axios.get(`https://realestate-backend-6bxy.onrender.com/api/properties?search=${search}`);
       setProperties(response.data);
     } catch (error) {
       console.error('Error fetching properties:', error);
