@@ -7,6 +7,13 @@ declare global {
   interface Window {
     google?: {
       accounts?: {
+        id?: {
+          initialize: (options: {
+            client_id: string;
+            callback: (response: { credential?: string; error?: string }) => void;
+          }) => void;
+          prompt: (callback?: (notification: any) => void) => void;
+        };
         oauth2?: {
           initTokenClient: (options: any) => any;
         };
@@ -42,15 +49,25 @@ const Signup: React.FC = () => {
   }, []);
 
   const handleGoogleCallback = async (response: any) => {
+    console.log('Google callback response:', JSON.stringify(response));
+
     if (response.error) {
-      setError('Google sign-in failed');
+      setError('Google sign-in failed: ' + response.error);
+      return;
+    }
+
+    const credential = response.credential;
+    console.log('Credential present:', !!credential);
+
+    if (!credential) {
+      setError('No credential received from Google');
       return;
     }
 
     setGoogleLoading(true);
     try {
       const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/google`, {
-        credential: response.credential,
+        credential: credential,
       });
 
       const { user } = res.data;
@@ -59,6 +76,7 @@ const Signup: React.FC = () => {
       localStorage.setItem('user', JSON.stringify(userWithAdmin));
       window.location.href = '/';
     } catch (err: any) {
+      console.error('Google auth error:', err.response?.data);
       setError(err.response?.data?.message || 'Google sign-in failed');
     } finally {
       setGoogleLoading(false);
@@ -70,12 +88,13 @@ const Signup: React.FC = () => {
       setError('Google Sign-In is not configured');
       return;
     }
-    const client = window.google?.accounts?.oauth2?.initTokenClient({
+
+    window.google?.accounts?.id?.initialize({
       client_id: GOOGLE_CLIENT_ID,
-      scope: 'openid email profile',
       callback: handleGoogleCallback,
     });
-    client?.requestAccessToken();
+
+    window.google?.accounts?.id?.prompt();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

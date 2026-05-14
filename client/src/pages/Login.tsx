@@ -8,6 +8,13 @@ declare global {
   interface Window {
     google?: {
       accounts?: {
+        id?: {
+          initialize: (options: {
+            client_id: string;
+            callback: (response: { credential?: string; error?: string }) => void;
+          }) => void;
+          prompt: (callback?: (notification: any) => void) => void;
+        };
         oauth2?: {
           initTokenClient: (options: any) => any;
         };
@@ -35,36 +42,37 @@ const Login: React.FC = () => {
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
     script.defer = true;
-    script.onload = () => {
-      if (window.google?.accounts?.oauth2) {
-        window.google.accounts.oauth2.initTokenClient({
-          client_id: GOOGLE_CLIENT_ID,
-          scope: 'openid email profile',
-          callback: handleGoogleCallback,
-        });
-      }
-    };
     document.body.appendChild(script);
 
     return () => {
-      document.body.removeChild(script);
+      const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+      if (existingScript) document.body.removeChild(existingScript);
     };
   }, []);
 
   const handleGoogleCallback = async (response: any) => {
+    console.log('Google callback response:', JSON.stringify(response));
+
     if (response.error) {
-      setError('Google sign-in failed');
+      setError('Google sign-in failed: ' + response.error);
+      return;
+    }
+
+    const credential = response.credential;
+    console.log('Credential present:', !!credential);
+
+    if (!credential) {
+      setError('No credential received from Google');
       return;
     }
 
     setGoogleLoading(true);
     try {
       const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/google`, {
-        credential: response.credential,
+        credential: credential,
       });
 
       const { user } = res.data;
-      // Check if user email matches admin email
       const isAdmin = user.email.toLowerCase().trim() === 'govardhanchinta999@gmail.com'.toLowerCase().trim();
       const userWithAdmin = { ...user, isAdmin };
       localStorage.setItem('user', JSON.stringify(userWithAdmin));
@@ -82,14 +90,14 @@ const Login: React.FC = () => {
       setError('Google Sign-In is not configured');
       return;
     }
-    const client = window.google?.accounts?.oauth2?.initTokenClient({
+
+    window.google?.accounts?.id?.initialize({
       client_id: GOOGLE_CLIENT_ID,
-      scope: 'openid email profile',
       callback: handleGoogleCallback,
     });
-    client?.requestAccessToken();
-  };
 
+    window.google?.accounts?.id?.prompt();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
