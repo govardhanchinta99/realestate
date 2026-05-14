@@ -110,13 +110,16 @@ const createProperty = async (req, res) => {
          * We need to create an embedding and upload it to pinecone whenever a new property is added
          */
         // Step 1: Create embed for this property
-        const embeddingText = `Title: ${createdProperty.title}, 
-    Type: ${createdProperty.propertyType}, 
-    Location: ${createdProperty.location}, 
-    Price: ${createdProperty.price}, 
-    Bedrooms: ${createdProperty.bedrooms}, 
-    Bathrooms: ${createdProperty.bathrooms}, 
-    Description: ${createdProperty.description}`;
+        const embeddingText = `Title: ${createdProperty.title},
+    Description: ${createdProperty.description},
+    Type: ${createdProperty.propertyType},
+    Location: ${createdProperty.location},
+    Price: ${createdProperty.price},
+    Bedrooms: ${createdProperty.bedrooms},
+    Bathrooms: ${createdProperty.bathrooms},
+    Area: ${createdProperty.area} sq ft,
+    Amenities: ${createdProperty.amenities?.join(', ') || 'None'},
+    Status: ${createdProperty.status}`;
 
         const embedding = await generateEmbedding(embeddingText);
 
@@ -128,11 +131,15 @@ const createProperty = async (req, res) => {
             values: embedding,
             metadata: {
                 title: createdProperty.title,
+                description: createdProperty.description,
                 propertyType: createdProperty.propertyType,
                 location: createdProperty.location,
                 price: createdProperty.price,
                 bedrooms: createdProperty.bedrooms,
                 bathrooms: createdProperty.bathrooms,
+                area: createdProperty.area,
+                status: createdProperty.status,
+                amenities: createdProperty.amenities?.join(', ') || '',
             },
         };
 
