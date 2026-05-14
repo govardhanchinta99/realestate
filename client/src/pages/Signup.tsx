@@ -64,8 +64,11 @@ const Signup: React.FC = () => {
       });
 
       const { user } = res.data;
+      console.log('Google signup user:', user);
       const isAdmin = user.email.toLowerCase().trim() === 'govardhanchinta999@gmail.com'.toLowerCase().trim();
+      console.log('isAdmin:', isAdmin);
       const userWithAdmin = { ...user, isAdmin };
+      console.log('Saving user:', userWithAdmin);
       localStorage.setItem('user', JSON.stringify(userWithAdmin));
       window.location.href = '/';
     } catch (err: any) {

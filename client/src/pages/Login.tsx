@@ -68,10 +68,13 @@ const Login: React.FC = () => {
       });
 
       const { user } = res.data;
+      console.log('Google login user:', user);
       const isAdmin = user.email.toLowerCase().trim() === 'govardhanchinta999@gmail.com'.toLowerCase().trim();
+      console.log('isAdmin:', isAdmin);
       const userWithAdmin = { ...user, isAdmin };
+      console.log('Saving user:', userWithAdmin);
       localStorage.setItem('user', JSON.stringify(userWithAdmin));
-      navigate('/');
+      window.location.href = '/';
     } catch (err: any) {
       console.error('Google auth error:', err.response?.data);
       setError(err.response?.data?.message || 'Google sign-in failed');

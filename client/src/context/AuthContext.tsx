@@ -27,6 +27,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
+    console.log('AuthContext init - storedUser:', storedUser);
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
