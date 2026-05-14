@@ -32,22 +32,17 @@ const Login: React.FC = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [googleInitialized, setGoogleInitialized] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!GOOGLE_CLIENT_ID) return;
-
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
     script.defer = true;
+    script.onload = () => setGoogleInitialized(true);
     document.body.appendChild(script);
-
-    return () => {
-      const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
-      if (existingScript) document.body.removeChild(existingScript);
-    };
   }, []);
 
   const handleGoogleCallback = async (response: any) => {
@@ -88,6 +83,11 @@ const Login: React.FC = () => {
   const handleGoogleSignIn = () => {
     if (!GOOGLE_CLIENT_ID) {
       setError('Google Sign-In is not configured');
+      return;
+    }
+
+    if (!window.google?.accounts?.id) {
+      setError('Google Sign-In not loaded yet');
       return;
     }
 

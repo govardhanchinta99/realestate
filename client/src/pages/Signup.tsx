@@ -34,18 +34,11 @@ const Signup: React.FC = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!GOOGLE_CLIENT_ID) return;
-
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
     script.defer = true;
     document.body.appendChild(script);
-
-    return () => {
-      const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
-      if (existingScript) document.body.removeChild(existingScript);
-    };
   }, []);
 
   const handleGoogleCallback = async (response: any) => {
