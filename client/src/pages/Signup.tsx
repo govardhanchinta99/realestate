@@ -15,7 +15,7 @@ declare global {
   }
 }
 
-const GOOGLE_CLIENT_ID = '1021771446696-oc0dbhkeup7l29m57tmkki072v7d3i8s.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 const Signup: React.FC = () => {
   const [name, setName] = useState('');
@@ -27,6 +27,8 @@ const Signup: React.FC = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (!GOOGLE_CLIENT_ID) return;
+
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
@@ -64,6 +66,10 @@ const Signup: React.FC = () => {
   };
 
   const handleGoogleSignUp = () => {
+    if (!GOOGLE_CLIENT_ID) {
+      setError('Google Sign-In is not configured');
+      return;
+    }
     const client = window.google?.accounts?.oauth2?.initTokenClient({
       client_id: GOOGLE_CLIENT_ID,
       scope: 'openid email profile',
