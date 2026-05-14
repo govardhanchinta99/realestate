@@ -12,10 +12,11 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors({
-  origin: process.env.CLIENT_URL,
+const corsOptions = {
+  origin: process.env.CLIENT_URL?.split(',') || '*',
   credentials: true
-}));
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Routes
