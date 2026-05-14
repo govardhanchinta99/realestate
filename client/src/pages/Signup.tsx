@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { UserPlus, Mail, Lock, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -14,15 +14,13 @@ declare global {
           }) => void;
           prompt: (callback?: (notification: any) => void) => void;
         };
-        oauth2?: {
-          initTokenClient: (options: any) => any;
-        };
       };
     };
   }
 }
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+console.log('VITE_GOOGLE_CLIENT_ID:', GOOGLE_CLIENT_ID);
 
 const Signup: React.FC = () => {
   const [name, setName] = useState('');
@@ -32,12 +30,18 @@ const Signup: React.FC = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const scriptLoaded = useRef(false);
 
   useEffect(() => {
+    if (scriptLoaded.current) return;
+    scriptLoaded.current = true;
+
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
     script.defer = true;
+    script.onload = () => console.log('Google GSI script loaded');
+    script.onerror = () => console.error('Failed to load Google GSI script');
     document.body.appendChild(script);
   }, []);
 
@@ -46,6 +50,7 @@ const Signup: React.FC = () => {
 
     if (response.error) {
       setError('Google sign-in failed: ' + response.error);
+      setGoogleLoading(false);
       return;
     }
 
@@ -54,6 +59,7 @@ const Signup: React.FC = () => {
 
     if (!credential) {
       setError('No credential received from Google');
+      setGoogleLoading(false);
       return;
     }
 
@@ -74,23 +80,33 @@ const Signup: React.FC = () => {
     } catch (err: any) {
       console.error('Google auth error:', err.response?.data);
       setError(err.response?.data?.message || 'Google sign-in failed');
-    } finally {
       setGoogleLoading(false);
     }
   };
 
   const handleGoogleSignUp = () => {
+    console.log('handleGoogleSignUp called');
+    console.log('GOOGLE_CLIENT_ID:', GOOGLE_CLIENT_ID);
+    console.log('window.google:', window.google);
+
     if (!GOOGLE_CLIENT_ID) {
-      setError('Google Sign-In is not configured');
+      setError('Google Sign-In is not configured. Add VITE_GOOGLE_CLIENT_ID to .env');
       return;
     }
 
-    window.google?.accounts?.id?.initialize({
+    if (!window.google?.accounts?.id) {
+      setError('Google Sign-In is still loading. Please try again in a moment.');
+      return;
+    }
+
+    console.log('Initializing Google Sign-Up...');
+    window.google.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,
       callback: handleGoogleCallback,
     });
 
-    window.google?.accounts?.id?.prompt();
+    console.log('Showing Google Sign-In prompt...');
+    window.google.accounts.id.prompt();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
