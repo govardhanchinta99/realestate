@@ -70,6 +70,7 @@ const Login: React.FC = () => {
       localStorage.setItem('user', JSON.stringify(userWithAdmin));
       navigate('/');
     } catch (err: any) {
+      console.error('Google auth error:', err.response?.data);
       setError(err.response?.data?.message || 'Google sign-in failed');
     } finally {
       setGoogleLoading(false);
