@@ -13,27 +13,26 @@ const {
     getInvestmentAnalysis,
 } = require("../controllers/propertyController");
 
-router.get("/search/semantic", semanticSearch);
-router.get("/:id/investment-analysis", getInvestmentAnalysis);
-
-router.route("/").get(getProperties).post(createProperty);
-
-router
-    .route("/:id")
-    .get(getPropertyById)
-    .put(updateProperty)
-    .delete(deleteProperty);
-
-router.post("/generate-description", generateDescription);
-
 // --- Middleware Configuration ---
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
 });
 
+// Specific static routes first
+router.get("/search/semantic", semanticSearch);
+router.post("/generate-description", generateDescription);
+router.post("/generate-details-from-image", upload.single("image"), generateDetailsFromImage);
+
+// Collection root routes
+router.route("/").get(getProperties).post(createProperty);
+
+// Parameterized item routes
+router.get("/:id/investment-analysis", getInvestmentAnalysis);
 router
-    .route("/generate-details-from-image")
-    .post(upload.single("image"), generateDetailsFromImage);
+    .route("/:id")
+    .get(getPropertyById)
+    .put(updateProperty)
+    .delete(deleteProperty);
 
 module.exports = router;

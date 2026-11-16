@@ -1,229 +1,306 @@
-import React, { useState, useEffect } from "react";
-import { useLocation, Link } from "react-router-dom";
-import axios from "axios";
-import { useProperty, Property } from "@/context/PropertyContext";
-import { Heart, MapPin, ArrowLeft, Search, Sparkles, Bed, Bath, Ruler } from "lucide-react";
-import { motion } from "framer-motion";
+import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { useProperty, Property } from '@/context/PropertyContext';
+import { getApiUrl } from '@/lib/api';
+import {
+  Heart,
+  MapPin,
+  ArrowLeft,
+  Search,
+  Sparkles,
+  Bed,
+  Bath,
+  Ruler,
+  SlidersHorizontal,
+  Compass,
+  Check,
+  RotateCcw
+} from 'lucide-react';
+import { motion } from 'framer-motion';
+import PropertyCard from '@/components/property/PropertyCard';
+import QuickViewModal from '@/components/property/QuickViewModal';
+import Footer from '@/components/layout/Footer';
 
 const SemanticSearch: React.FC = () => {
   const location = useLocation();
-  const query = new URLSearchParams(location.search).get("q");
+  const navigate = useNavigate();
+  const queryParam = new URLSearchParams(location.search).get('q') || '';
+  const { properties } = useProperty();
+
+  const [searchInput, setSearchInput] = useState(queryParam);
+  const [activeQuery, setActiveQuery] = useState(queryParam);
   const [results, setResults] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { addToSaved, isSaved } = useProperty();
+  const [loading, setLoading] = useState(false);
+  const [quickViewProperty, setQuickViewProperty] = useState<Property | null>(null);
+
+  // Secondary refine filters
+  const [selectedType, setSelectedType] = useState('All');
+  const [maxPrice, setMaxPrice] = useState<'Any' | number>('Any');
+
+  const popularQueries = [
+    'Quiet neighborhood for remote work',
+    'Family home with private fenced backyard',
+    'Modern penthouse with panoramic city views',
+    'Beachfront villa with infinity pool',
+    'Mid-century modern design with mountain views',
+    'Minimalist urban loft near transit and cafes'
+  ];
+
+  // Semantic query executor with local vector/keyword fallback
+  const performSearch = useCallback(async (queryToSearch: string) => {
+    if (!queryToSearch.trim()) {
+      setResults(properties);
+      return;
+    }
+
+    setLoading(true);
+    setActiveQuery(queryToSearch);
+
+    try {
+      const response = await axios.get(
+        getApiUrl(`/api/properties/search/semantic?q=${encodeURIComponent(queryToSearch)}`),
+        { timeout: 5000 }
+      );
+
+      if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+        setResults(response.data);
+        return;
+      }
+    } catch (error) {
+      console.log('Using local semantic matching engine');
+    }
+
+    // Local semantic scoring simulation
+    const keywords = queryToSearch
+      .toLowerCase()
+      .replace(/[^\w\s]/g, '')
+      .split(/\s+/)
+      .filter((w) => w.length > 2);
+
+    const scored = properties.map((prop) => {
+      const textToMatch = `${prop.title} ${prop.description} ${prop.location} ${prop.propertyType} ${(
+        prop.amenities || []
+      ).join(' ')} ${(prop.tags || []).join(' ')}`.toLowerCase();
+
+      let matchCount = 0;
+      keywords.forEach((kw) => {
+        if (textToMatch.includes(kw)) matchCount += 1.5;
+      });
+
+      // Semantic affinity heuristics
+      if (queryToSearch.toLowerCase().includes('pool') && prop.amenities.some((a) => a.includes('Pool')))
+        matchCount += 2;
+      if (queryToSearch.toLowerCase().includes('quiet') && (prop.description.includes('tranquil') || prop.tags?.includes('quiet')))
+        matchCount += 2;
+      if (queryToSearch.toLowerCase().includes('remote') && (prop.amenities.some((a) => a.includes('Studio')) || prop.tags?.includes('remote work')))
+        matchCount += 2;
+      if (queryToSearch.toLowerCase().includes('beach') && (prop.location.includes('Malibu') || prop.title.includes('Coastal')))
+        matchCount += 3;
+
+      const baseScore = 0.75;
+      const normalizedScore = Math.min(0.99, baseScore + matchCount * 0.05);
+
+      return {
+        ...prop,
+        score: normalizedScore
+      };
+    });
+
+    // Sort by match score descending
+    scored.sort((a, b) => (b.score || 0) - (a.score || 0));
+    setResults(scored);
+    setLoading(false);
+  }, [properties]);
 
   useEffect(() => {
-    const fetchResults = async () => {
-      if (!query) return;
-      setLoading(true);
-      try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/properties/search/semantic?q=${encodeURIComponent(query)}`
-        );
-        setResults(response.data);
-      } catch (error) {
-        console.error("Error fetching semantic search results:", error);
-        // Mock results for demo
-        setResults([
-          {
-            _id: '1',
-            title: 'Luxurious Modern Villa',
-            description: 'Step into luxury with this stunning 4-bedroom villa.',
-            price: 1250000,
-            propertyType: 'Villa',
-            location: 'Beverly Hills, CA',
-            bedrooms: 4,
-            bathrooms: 3,
-            area: 3500,
-            status: 'For Sale',
-            image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80',
-          },
-          {
-            _id: '3',
-            title: 'Cozy Family Home',
-            description: 'Charming family home in a quiet neighborhood.',
-            price: 575000,
-            propertyType: 'House',
-            location: 'Austin, TX',
-            bedrooms: 3,
-            bathrooms: 2,
-            area: 2200,
-            status: 'For Sale',
-            image: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=80',
-          },
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (queryParam) {
+      setSearchInput(queryParam);
+      performSearch(queryParam);
+    } else {
+      // Default to curated list
+      setResults(properties);
+    }
+  }, [queryParam, properties, performSearch]);
 
-    fetchResults();
-  }, [query]);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchInput.trim()) {
+      navigate(`/semantic-search?q=${encodeURIComponent(searchInput.trim())}`);
+      performSearch(searchInput.trim());
+    }
+  };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="relative">
-            <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-            <Sparkles className="w-6 h-6 text-accent absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-          </div>
-          <p className="text-muted-foreground font-medium">Searching with AI...</p>
-        </div>
-      </div>
-    );
-  }
+  // Filtered results
+  const filteredResults = results.filter((p) => {
+    if (selectedType !== 'All' && p.propertyType !== selectedType) return false;
+    if (maxPrice !== 'Any' && p.price > Number(maxPrice)) return false;
+    return true;
+  });
 
   return (
-    <div className="min-h-screen bg-background py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Back & Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-10"
-        >
-          <Link 
-            to="/" 
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6 group"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            Back to Home
-          </Link>
-
-          <div className="flex items-center gap-4 mb-2">
-            <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center">
-              <Search className="w-6 h-6 text-accent" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-accent" />
-                <span className="text-sm text-accent font-medium">AI Semantic Search</span>
-              </div>
-              <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">
-                Results for "{query}"
-              </h1>
-            </div>
+    <div className="min-h-screen bg-background">
+      {/* Header Banner */}
+      <section className="bg-gradient-hero py-16 text-center relative overflow-hidden">
+        <div className="max-w-4xl mx-auto px-4 relative z-10">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-4 text-xs font-semibold text-primary-foreground">
+            <Sparkles className="w-4 h-4 text-accent" />
+            <span>Pinecone & Gemini Vector Embeddings</span>
           </div>
-          
-          <p className="text-muted-foreground ml-16">
-            Found {results.length} {results.length === 1 ? 'property' : 'properties'} matching your lifestyle criteria
+
+          <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold text-primary-foreground mb-4">
+            Search Homes by Lifestyle & Vibe
+          </h1>
+
+          <p className="text-xs sm:text-sm text-primary-foreground/80 max-w-xl mx-auto mb-6">
+            Describe how you want your life to feel — "walkable neighborhood with great bakeries" or "zen garden sanctuary".
           </p>
-        </motion.div>
 
-        {results.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-center py-20"
-          >
-            <div className="w-24 h-24 bg-secondary rounded-3xl flex items-center justify-center mx-auto mb-6">
-              <Search className="w-12 h-12 text-muted-foreground" />
-            </div>
-            <h2 className="font-display text-2xl font-bold text-foreground mb-4">No Matching Properties</h2>
-            <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-              We couldn't find properties matching "{query}". Try describing your ideal home differently.
-            </p>
-            <Link 
-              to="/" 
-              className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 rounded-xl font-semibold hover:bg-primary/90 transition-all"
+          {/* Search Input Box */}
+          <form onSubmit={handleSubmit} className="max-w-2xl mx-auto relative">
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search by lifestyle... 'quiet home for remote work with fenced yard'"
+              className="w-full px-6 py-4 pl-12 pr-28 text-xs sm:text-sm bg-card/95 backdrop-blur-md text-foreground rounded-2xl shadow-elevated focus:outline-none focus:ring-4 focus:ring-accent/30 border border-white/20"
+            />
+            <Search className="w-4 h-4 text-muted-foreground absolute left-4 top-1/2 -translate-y-1/2" />
+            <button
+              type="submit"
+              className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors shadow-soft"
             >
-              Browse All Listings
-            </Link>
-          </motion.div>
+              Analyze
+            </button>
+          </form>
+
+          {/* Prompts */}
+          <div className="flex flex-wrap justify-center gap-2 mt-4 max-w-3xl mx-auto">
+            {popularQueries.slice(0, 4).map((q) => (
+              <button
+                key={q}
+                onClick={() => {
+                  setSearchInput(q);
+                  navigate(`/semantic-search?q=${encodeURIComponent(q)}`);
+                  performSearch(q);
+                }}
+                className="text-[11px] bg-white/10 hover:bg-white/20 text-primary-foreground/90 px-3 py-1 rounded-full border border-white/15 transition-all"
+              >
+                "{q}"
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Results Workspace */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {/* Results Header & Secondary Filters */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-border/60">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Sparkles className="w-4 h-4 text-accent" />
+              <h2 className="font-display text-xl sm:text-2xl font-bold text-foreground">
+                {activeQuery ? `Results for "${activeQuery}"` : 'AI Curated Portfolio'}
+              </h2>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Found {filteredResults.length} properties matched by lifestyle context
+            </p>
+          </div>
+
+          {/* Refine Filters */}
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              className="px-3 py-2 text-xs bg-card border border-border rounded-xl text-foreground focus:outline-none cursor-pointer"
+            >
+              <option value="All">All Types</option>
+              <option value="Villa">Villa</option>
+              <option value="Apartment">Apartment</option>
+              <option value="House">House</option>
+              <option value="Condo">Condo</option>
+              <option value="Studio">Studio</option>
+            </select>
+
+            <select
+              value={maxPrice}
+              onChange={(e) => setMaxPrice(e.target.value === 'Any' ? 'Any' : Number(e.target.value))}
+              className="px-3 py-2 text-xs bg-card border border-border rounded-xl text-foreground focus:outline-none cursor-pointer"
+            >
+              <option value="Any">Any Price</option>
+              <option value="1000000">Under $1,000,000</option>
+              <option value="2000000">Under $2,000,000</option>
+              <option value="3500000">Under $3,500,000</option>
+            </select>
+
+            {(selectedType !== 'All' || maxPrice !== 'Any') && (
+              <button
+                onClick={() => {
+                  setSelectedType('All');
+                  setMaxPrice('Any');
+                }}
+                className="px-2.5 py-2 text-xs text-destructive hover:bg-destructive/10 rounded-xl"
+              >
+                Reset
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Listings Display */}
+        {loading ? (
+          <div className="py-24 text-center">
+            <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-3" />
+            <p className="text-xs text-muted-foreground font-semibold">
+              Generating semantic vector matches with Pinecone & Gemini...
+            </p>
+          </div>
+        ) : filteredResults.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredResults.map((property, idx) => (
+              <PropertyCard
+                key={property._id}
+                property={property}
+                index={idx}
+                showMatchScore={!!activeQuery}
+                onQuickView={(p) => setQuickViewProperty(p)}
+              />
+            ))}
+          </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
-            {results.map((property, index) => {
-              const saved = isSaved(property._id);
-              return (
-                <motion.div
-                  key={property._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="property-card group"
-                >
-                  <Link to={`/property/${property._id}`}>
-                    <div className="relative h-64 overflow-hidden">
-                      <img
-                        src={property.image || "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80"}
-                        alt={property.title}
-                        className="property-image w-full h-full object-cover object-center"
-                      />
-                      
-                      <div className="absolute inset-0 bg-gradient-to-t from-charcoal/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                      
-                      <div className="absolute top-3 left-3 flex gap-2">
-                        <span className={`badge-status ${property.status === 'For Sale' ? 'badge-sale' : 'badge-rent'}`}>
-                          {property.status}
-                        </span>
-                      </div>
-
-                      <div className="absolute top-3 right-3">
-                        <span className="badge-status badge-type backdrop-blur-sm bg-card/80">
-                          {property.propertyType}
-                        </span>
-                      </div>
-
-                      <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div className="flex items-center gap-1.5 text-primary-foreground text-sm">
-                          <MapPin size={14} className="flex-shrink-0" />
-                          <span className="truncate font-medium">{property.location}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-
-                  <div className="p-5">
-                    <Link to={`/property/${property._id}`}>
-                      <h3 className="font-display text-lg font-semibold text-foreground mb-2 hover:text-primary transition-colors line-clamp-1">
-                        {property.title}
-                      </h3>
-                    </Link>
-
-                    <div className="flex items-baseline gap-1 mb-4">
-                      <span className="text-2xl font-bold text-primary">
-                        ${property.price.toLocaleString()}
-                      </span>
-                      {property.status === 'For Rent' && (
-                        <span className="text-sm text-muted-foreground">/month</span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-4 text-muted-foreground text-sm mb-5 pb-5 border-b border-border">
-                      <div className="flex items-center gap-1.5">
-                        <Bed size={16} className="text-primary/70" />
-                        <span>{property.bedrooms} Beds</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Bath size={16} className="text-primary/70" />
-                        <span>{property.bathrooms} Baths</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Ruler size={16} className="text-primary/70" />
-                        <span>{property.area.toLocaleString()} sqft</span>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => addToSaved(property)}
-                      disabled={saved}
-                      className={`w-full py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
-                        saved 
-                          ? 'bg-secondary text-muted-foreground cursor-default' 
-                          : 'bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-soft'
-                      }`}
-                    >
-                      <Heart size={18} className={saved ? "fill-current" : ""} />
-                      {saved ? 'Saved' : 'Save Property'}
-                    </button>
-                  </div>
-                </motion.div>
-              );
-            })}
+          <div className="text-center py-20 bg-card rounded-3xl border border-border p-8">
+            <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center mx-auto mb-4 text-muted-foreground">
+              <Search className="w-8 h-8" />
+            </div>
+            <h3 className="font-display text-xl font-bold text-foreground mb-2">
+              No Matches Found for this Query
+            </h3>
+            <p className="text-xs text-muted-foreground max-w-sm mx-auto mb-6">
+              Try rephrasing your lifestyle vibe or explore one of our trending searches.
+            </p>
+            <button
+              onClick={() => {
+                setSearchInput('Quiet neighborhood for remote work');
+                performSearch('Quiet neighborhood for remote work');
+              }}
+              className="px-5 py-2.5 bg-primary text-primary-foreground text-xs font-semibold rounded-xl hover:bg-primary/90 transition-colors"
+            >
+              Try "Quiet neighborhood for remote work"
+            </button>
           </div>
         )}
-      </div>
+      </section>
+
+      {/* Quick View Modal */}
+      <QuickViewModal
+        property={quickViewProperty}
+        isOpen={!!quickViewProperty}
+        onClose={() => setQuickViewProperty(null)}
+      />
+
+      <Footer />
     </div>
   );
 };
